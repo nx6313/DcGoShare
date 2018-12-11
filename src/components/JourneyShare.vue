@@ -40,6 +40,7 @@ export default {
       lastDriverLocations: null,
       travelLine: [], // 司机行驶轨迹点数组
       getDriverLocationInterval: 6000,
+      touchMapTime: 0,
       distanceInteger: '-',
       distanceDecimals: '--',
       timeInteger: '-',
@@ -57,6 +58,12 @@ export default {
         zIndex: 10
     })
     this.map.add(trafficLayer)
+    this.map.on('dragging', () => {
+      this.touchMapTime = new Date().getTime()
+    })
+    this.map.on('touchmove', () => {
+      this.touchMapTime = new Date().getTime()
+    })
   },
   created() {
     // 先检查当前订单状态
@@ -127,7 +134,6 @@ export default {
       this.map.setFitView()
       this.requestDriverLocation(driverId, orderId)
       setInterval(() => {
-        this.map.setFitView()
         this.requestDriverLocation(driverId, orderId)
       }, this.getDriverLocationInterval)
     },
@@ -211,7 +217,10 @@ export default {
         passedPolyline.setPath(data.passedPath)
       })
       this.driverMarker.moveAlong(this.travelLine, speed)
-      this.map.setFitView()
+      if (new Date().getTime() - this.touchMapTime > 2000) {
+        this.touchMapTime = 0
+        this.map.setFitView()
+      }
     }
   }
 }
