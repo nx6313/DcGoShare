@@ -37,8 +37,9 @@ export default {
       },
       map: null,
       driverMarker: null,
-      lastDriverLocation: null,
+      lastDriverLocations: null,
       travelLine: [], // 司机行驶轨迹点数组
+      getDriverLocationInterval: 6000,
       distanceInteger: '-',
       distanceDecimals: '--',
       timeInteger: '-',
@@ -128,7 +129,7 @@ export default {
       setInterval(() => {
         this.map.setFitView()
         this.requestDriverLocation(driverId, orderId)
-      }, 8000)
+      }, this.getDriverLocationInterval)
     },
     requestDriverLocation(driverId, orderId) {
         this.$comfun.http_post(this, `api/member/getDriverLocation`, {
@@ -160,35 +161,41 @@ export default {
       if (this.driverMarker === null) {
         this.driverMarker = new AMap.Marker({
           icon: new AMap.Icon({
-            size: new AMap.Size(22, 41),
+            size: new AMap.Size(41, 22),
             image: require('../assets/default_driver_car.png'),
-            imageSize: new AMap.Size(22, 41)
+            imageSize: new AMap.Size(41, 22)
           }),
           position: [driverLatLng.lng, driverLatLng.lat],
-          offset: new AMap.Pixel(11, 20),
+          offset: new AMap.Pixel(-20, -11),
           autoRotation: true,
           angle: orientation
         })
         this.driverMarker.setMap(this.map)
       }
       this.travelLine = []
+      var speed = 100
       if (this.lastDriverLocation != null) {
         this.travelLine.push(this.lastDriverLocation)
+        var distance = new AMap.LngLat(this.lastDriverLocation[0], this.lastDriverLocation[1]).distance(new AMap.LngLat(driverLatLng.lng, driverLatLng.lat))
+        speed = distance / ((this.getDriverLocationInterval + 100) / 1000) * 3.6 // 千米/小时
+        if (speed === 0) {
+          speed = 100
+        }
       }
       this.travelLine.push([driverLatLng.lng, driverLatLng.lat])
       this.lastDriverLocation = [driverLatLng.lng, driverLatLng.lat]
       if (this.travelLine.length > 1) {
-        this.moveAlongDriver()
+        this.moveAlongDriver(speed)
       }
     },
-    moveAlongDriver() {
+    moveAlongDriver(speed) {
       // 绘制轨迹
       var polyline = new AMap.Polyline({
         map: this.map,
         path: this.travelLine,
         showDir: true,
         strokeColor: "#28F", // 线颜色
-        // strokeOpacity: 1, //线透明度
+        strokeOpacity: 0, //线透明度
         strokeWeight: 6, //线宽
         // strokeStyle: "solid" //线样式
       })
@@ -196,14 +203,14 @@ export default {
         map: this.map,
         // path: this.travelLine,
         strokeColor: "#AF5", //线颜色
-        // strokeOpacity: 1, //线透明度
+        strokeOpacity: 0, //线透明度
         strokeWeight: 6, //线宽
         // strokeStyle: "solid" //线样式
       })
       this.driverMarker.on('moving', (data) => {
         passedPolyline.setPath(data.passedPath)
       })
-      this.driverMarker.moveAlong(this.travelLine, 200)
+      this.driverMarker.moveAlong(this.travelLine, speed)
       this.map.setFitView()
     }
   }
