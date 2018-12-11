@@ -20,7 +20,7 @@ Vue.use(CryptoJS)
 // var server_address = "http://172.18.2.32:8080/" // 一飞
 // var server_address = "http://172.18.2.26:8080/" // 玉慧
 var server_address = "https://www.dcchuxing.com/" // 正式服务器
-// var server_address = "https://dev.dcchuxing.com/" // 测试服务器
+var server_address_dev = "https://dev.dcchuxing.com/" // 测试服务器
 var key = CryptoJS.enc.Utf8.parse("123456789zxcvbnm")
 var iv = CryptoJS.enc.Utf8.parse("123456789zxcvbnm")
 
@@ -36,8 +36,12 @@ export default {
         }
         var axiosOptions = {
           method: 'GET',
-          url: server_address + url,
           headers: headers
+        }
+        if (this.getRequestHash('serviceType', true) === 'dev') {
+          axiosOptions.url = server_address_dev + url
+        } else {
+          axiosOptions.url = server_address + url
         }
         if (params) {
           axiosOptions.data = params
@@ -55,8 +59,12 @@ export default {
         }
         var axiosOptions = {
           method: 'POST',
-          url: server_address + url,
           headers: headers
+        }
+        if (this.getRequestHash('serviceType', true) === 'dev') {
+          axiosOptions.url = server_address_dev + url
+        } else {
+          axiosOptions.url = server_address + url
         }
         if (params) {
           axiosOptions.data = params
